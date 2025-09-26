@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/daffa-fawwaz/shiners-lms-backend/controllers"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 

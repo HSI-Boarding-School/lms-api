@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/daffa-fawwaz/shiners-lms-backend/models"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/models"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

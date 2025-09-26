@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/daffa-fawwaz/shiners-lms-backend/dto"
-	"github.com/daffa-fawwaz/shiners-lms-backend/models"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/dto"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/models"
 )
 
 func ToUserResponse(user *models.User) dto.UserResponse {

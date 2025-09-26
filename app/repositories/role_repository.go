@@ -4,7 +4,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/daffa-fawwaz/shiners-lms-backend/models"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/models"
 	"gorm.io/gorm"
 )
 

@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/daffa-fawwaz/shiners-lms-backend/models"
-	"github.com/daffa-fawwaz/shiners-lms-backend/repositories"
-	"github.com/daffa-fawwaz/shiners-lms-backend/utils"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/models"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/repositories"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/utils"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"

@@ -3,11 +3,11 @@ package app
 import (
 	"log"
 
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/controllers"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/repositories"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/routes"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/services"
 	"github.com/daffa-fawwaz/shiners-lms-backend/config"
-	"github.com/daffa-fawwaz/shiners-lms-backend/controllers"
-	"github.com/daffa-fawwaz/shiners-lms-backend/repositories"
-	"github.com/daffa-fawwaz/shiners-lms-backend/routes"
-	"github.com/daffa-fawwaz/shiners-lms-backend/services"
 
 	"github.com/gofiber/fiber/v2"
 )

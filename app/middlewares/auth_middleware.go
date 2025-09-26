@@ -3,7 +3,7 @@ package middlewares
 import (
 	"strings"
 
-	"github.com/daffa-fawwaz/shiners-lms-backend/utils"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/utils"
 	"github.com/gofiber/fiber/v2"
 )
 

@@ -2,8 +2,8 @@
 package controllers
 
 import (
-	"github.com/daffa-fawwaz/shiners-lms-backend/repositories"
-	"github.com/daffa-fawwaz/shiners-lms-backend/services"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/repositories"
+	"github.com/daffa-fawwaz/shiners-lms-backend/app/services"
 	"github.com/gofiber/fiber/v2"
 )
 
