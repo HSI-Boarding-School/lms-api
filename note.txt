@@ -1,0 +1,5 @@
+untuk menjalankan migration
+
+- Buat database dengan nama shiners_lms
+
+- jalankan perintah migrate -path migrations -database "postgres://<nama_user>:<password>@localhost:5432/shiners_lms?sslmode=disable" up
