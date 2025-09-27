@@ -3,7 +3,7 @@
 Pastikan sudah install Go 1.24+.
 Jalankan:
 
-go mod tidy
+go mod download
 
 2. Setup Environment
 
