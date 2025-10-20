@@ -1,1 +1,49 @@
+# Go / build artifacts
+bin/
+build/
+dist/
+tmp/
+coverage/
+*.out
+*.test
+*.log
+
+# Go binaries (platform specific)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Modules/vendor (optional — commit only if needed)
+vendor/
+
+# Workspace (optional — uncomment to ignore go.work)
+# go.work
+
+# Environment files
 .env
+.env.local
+.env.*.local
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database / storage / uploads (local generated)
+*.db
+*.sqlite
+*.sqlite3
+storage/
+uploads/
+public/uploads/
+data/
+
+# Tooling cache
+.air
+.air-*
+.cache/
