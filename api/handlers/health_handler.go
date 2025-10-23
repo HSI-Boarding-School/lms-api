@@ -3,6 +3,8 @@ package handlers
 import (
 	"api-shiners/pkg/config"
 	"api-shiners/pkg/utils"
+	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -49,20 +51,28 @@ func (ctrl *HealthController) HealthCheckDatabase(c *fiber.Ctx) error {
 
 
 func (ctrl *HealthController) HealthCheckRedis(c *fiber.Ctx) error {
-	// Coba ping ke Redis
-	_, err := config.RedisClient.Ping(config.Ctx).Result()
-	if err != nil {
-		// Jika gagal konek ke Redis
-		return utils.Error(c, http.StatusInternalServerError, err.Error(), "InternalServerError", nil)
-	}
-
 	status := fiber.Map{
 		"status": "ok",
 	}
 
-	status["redis"] = "connected"
+	// 🔹 Gunakan context lokal
+	ctx := context.Background()
 
-	// Jika Redis sehat
+	// 🔹 Cek apakah RedisClient tersedia
+	if config.RedisClient == nil {
+		status["redis"] = "not connected"
+		return utils.Success(c, http.StatusOK, "Redis not initialized (dev mode or disabled)", status, nil)
+	}
+
+	// 🔹 Coba ping ke Redis
+	_, err := config.RedisClient.Ping(ctx).Result()
+	if err != nil {
+		status["redis"] = "not connected"
+		return utils.Success(c, http.StatusOK, fmt.Sprintf("Redis not connected: %v", err.Error()), status, nil)
+	}
+
+	// 🔹 Jika Redis sehat
+	status["redis"] = "connected"
 	return utils.Success(c, http.StatusOK, "Redis connected successfully", status, nil)
 }
 

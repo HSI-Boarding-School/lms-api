@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"api-shiners/pkg/config"
@@ -25,60 +26,76 @@ func NewUserService(userRepo UserRepository) UserService {
 	return &userService{userRepo: userRepo}
 }
 
-//
-// ===== GET ALL USERS (dengan caching Redis) =====
-//
+// ===== GET ALL USERS (dengan caching Redis opsional) =====
 func (s *userService) GetAllUsers() ([]entities.User, error) {
 	ctx := context.Background()
 	cacheKey := "users:all"
 
-	// 🔹 Cek dari Redis dulu
-	val, err := config.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil && val != "" {
-		var users []entities.User
-		if err := json.Unmarshal([]byte(val), &users); err == nil {
-			return users, nil
+	var users []entities.User
+
+	// 🔹 Coba ambil dari Redis (jika aktif)
+	if config.RedisClient != nil {
+		val, err := config.RedisClient.Get(ctx, cacheKey).Result()
+		if err == nil && val != "" {
+			if err := json.Unmarshal([]byte(val), &users); err == nil {
+				return users, nil
+			}
+		} else if err != nil && err.Error() != "redis: client is closed" {
+			log.Println("⚠️ Redis not available or not running, skip caching...")
 		}
 	}
 
-	// 🔹 Jika cache kosong → ambil dari DB
+	// 🔹 Ambil dari DB
 	users, err := s.userRepo.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	// 🔹 Simpan ke cache selama 5 menit
-	data, _ := json.Marshal(users)
-	config.RedisClient.Set(ctx, cacheKey, data, 5*time.Minute)
+	// 🔹 Simpan ke cache (jika Redis aktif)
+	if config.RedisClient != nil {
+		data, _ := json.Marshal(users)
+		err := config.RedisClient.Set(ctx, cacheKey, data, 5*time.Minute).Err()
+		if err != nil {
+			log.Println("⚠️ Failed to cache users:", err)
+		}
+	}
 
 	return users, nil
 }
 
-//
-// ===== GET USER BY ID (dengan caching Redis) =====
-//
+// ===== GET USER BY ID (dengan caching Redis opsional) =====
 func (s *userService) GetUserByID(id uuid.UUID) (entities.User, error) {
 	ctx := context.Background()
 	cacheKey := fmt.Sprintf("user:%s", id.String())
 
-	// 🔹 Cek cache Redis
-	val, err := config.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil && val != "" {
-		var user entities.User
-		if err := json.Unmarshal([]byte(val), &user); err == nil {
-			return user, nil
+	var user entities.User
+
+	// 🔹 Coba ambil dari Redis (jika aktif)
+	if config.RedisClient != nil {
+		val, err := config.RedisClient.Get(ctx, cacheKey).Result()
+		if err == nil && val != "" {
+			if err := json.Unmarshal([]byte(val), &user); err == nil {
+				return user, nil
+			}
+		} else if err != nil && err.Error() != "redis: client is closed" {
+			log.Println("⚠️ Redis not available or not running, skip caching...")
 		}
 	}
 
-	// 🔹 Jika cache kosong → ambil dari DB
+	// 🔹 Ambil dari DB
 	user, err := s.userRepo.GetByID(id)
 	if err != nil {
 		return entities.User{}, err
 	}
 
-	// 🔹 Simpan ke Redis (TTL 10 menit)
-	data, _ := json.Marshal(user)
-	config.RedisClient.Set(ctx, cacheKey, data, 10*time.Minute)
+	// 🔹 Simpan ke Redis (jika aktif)
+	if config.RedisClient != nil {
+		data, _ := json.Marshal(user)
+		err := config.RedisClient.Set(ctx, cacheKey, data, 10*time.Minute).Err()
+		if err != nil {
+			log.Println("⚠️ Failed to cache user:", err)
+		}
+	}
 
 	return user, nil
 }

@@ -2,27 +2,41 @@ package config
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/redis/go-redis/v9"
 )
 
-var (
-	Ctx        = context.Background()
-	RedisClient *redis.Client
-)
+var RedisClient *redis.Client
 
 func InitRedis() {
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", // default Redis port
-		Password: "",               // kosong jika tidak pakai password
-		DB:       0,                // gunakan DB 0
-	})
+	// Gunakan env untuk mode
+	mode := os.Getenv("APP_MODE") // contoh: dev / prod
 
-	// Test koneksi
-	_, err := RedisClient.Ping(Ctx).Result()
-	if err != nil {
-		panic(fmt.Sprintf("❌ Gagal konek Redis: %v", err))
+	opt := &redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
 	}
 
-	fmt.Println("✅ Redis connected successfully")
+	client := redis.NewClient(opt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		if mode == "dev" {
+			log.Println("⚠️ Redis not running — skipping cache for dev mode")
+			RedisClient = nil
+			return
+		} else {
+			log.Fatalf("❌ Redis connection failed: %v", err)
+		}
+	}
+
+	log.Println("✅ Redis connected successfully")
+	RedisClient = client
 }
