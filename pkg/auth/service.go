@@ -2,12 +2,12 @@ package auth
 
 import (
 	"api-shiners/pkg/entities"
+	"api-shiners/pkg/utils"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"time"
-	"api-shiners/pkg/utils"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -27,7 +27,7 @@ type LoginRequest struct {
 
 type AuthService interface {
 	Register(ctx context.Context, req RegisterRequest) (*entities.User, error)
-	Login(ctx context.Context, req LoginRequest) (string, error)
+	Login(ctx context.Context, req LoginRequest) (string, time.Time, error)
 	Logout(ctx context.Context, token string) error
 	GenerateResetToken(ctx context.Context, email string) (string, error)
 	ResetPassword(ctx context.Context, token, newPassword string) error
@@ -80,43 +80,37 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*entit
 // =============================
 // LOGIN (Generate JWT Token)
 // =============================
-func (s *authService) Login(ctx context.Context, req LoginRequest) (string, error) {
+func (s *authService) Login(ctx context.Context, req LoginRequest) (string, time.Time, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return "", errors.New("invalid email or password")
+		return "", time.Time{}, errors.New("invalid email or password")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return "", errors.New("invalid email or password")
+		return "", time.Time{}, errors.New("invalid email or password")
 	}
 
-	// Ambil secret key dari env
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return "", errors.New("JWT_SECRET not set in environment")
+		return "", time.Time{}, errors.New("JWT_SECRET not set in environment")
 	}
 
-	// === Remember Me Logic ===
-	// Default durasi token: 24 jam
 	expiration := time.Now().Add(24 * time.Hour)
 
-	// Jika JWT_EXPIRE_HOURS diset di .env
 	if os.Getenv("JWT_EXPIRE_HOURS") != "" {
 		if d, err := time.ParseDuration(os.Getenv("JWT_EXPIRE_HOURS") + "h"); err == nil {
 			expiration = time.Now().Add(d)
 		}
 	}
 
-	// Jika request menyertakan remember_me = true → token berlaku 7 hari
 	rememberMe := false
 	if val, ok := ctx.Value("remember_me").(bool); ok {
 		rememberMe = val
 	}
 	if rememberMe {
-		expiration = time.Now().Add(7 * 24 * time.Hour) // 7 hari
+		expiration = time.Now().Add(7 * 24 * time.Hour)
 	}
 
-	// Buat payload token
 	claims := jwt.MapClaims{
 		"user_id": user.ID.String(),
 		"email":   user.Email,
@@ -125,14 +119,13 @@ func (s *authService) Login(ctx context.Context, req LoginRequest) (string, erro
 		"roles":   user.Roles,
 	}
 
-	// Generate token JWT
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %v", err)
+		return "", time.Time{}, fmt.Errorf("failed to generate token: %v", err)
 	}
 
-	return signedToken, nil
+	return signedToken, expiration, nil
 }
 
 

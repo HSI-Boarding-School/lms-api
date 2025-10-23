@@ -4,6 +4,26 @@ go get -u gorm.io/gorm
 go get gorm.io/driver/postgres
 go get github.com/joho/godotenv
 go get github.com/golang-jwt/jwt/v5
+go get -u github.com/swaggo/swag/cmd/swag
+go get -u github.com/gofiber/swagger
+go get -u github.com/swaggo/files
+go get github.com/gofiber/fiber/v2/middleware/cors
+go get github.com/redis/go-redis/v9
+go get github.com/stretchr/testify
+go get gopkg.in/yaml.v3@latest
+go mod tidy
 
 
-buat database bernama db_shiners dan atur di .env
+
+
+install redis terlebih dahulu
+- brew install redis (macos)
+
+
+
+
+* Database *
+- postgresql (download dahulu kalau belum ada)
+- buat database bernama db_shiners dan atur di .env (copy dulu dari .env.example)
+
+- jalankan di root project go run main.go
