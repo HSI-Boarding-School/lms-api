@@ -112,13 +112,16 @@ func (s *userService) SetUserRole(ctx context.Context, userID uuid.UUID, roleNam
 		return nil, errors.New("role not found")
 	}
 
-	// 3. Buat entitas relasi user-role
+	// 3. Hapus semua role lama user
+	if err := s.authRepo.RemoveAllRolesFromUser(ctx, user.ID); err != nil {
+		return nil, fmt.Errorf("failed to clear old roles: %v", err)
+	}
+
+	// 4. Tambahkan role baru
 	userRole := &entities.UserRole{
 		UserID: user.ID,
 		RoleID: role.ID,
 	}
-
-	// 4. Assign role ke user
 	if err := s.authRepo.AssignUserRole(ctx, userRole); err != nil {
 		return nil, err
 	}
@@ -131,3 +134,4 @@ func (s *userService) SetUserRole(ctx context.Context, userID uuid.UUID, roleNam
 
 	return &updatedUser, nil
 }
+

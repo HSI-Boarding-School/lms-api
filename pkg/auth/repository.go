@@ -16,6 +16,7 @@ type AuthRepository interface {
 	FindRoleByName(ctx context.Context, name string) (*entities.Role, error)
 	AssignUserRole(ctx context.Context, userRole *entities.UserRole) error
 	UpdateUser(ctx context.Context, user *entities.User) error
+	RemoveAllRolesFromUser(ctx context.Context, userID uuid.UUID) error
 
 	// 🔹 Tambahan untuk Forgot & Reset Password
 	SaveResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error
@@ -62,8 +63,32 @@ func (r *userRepository) FindRoleByName(ctx context.Context, name string) (*enti
 }
 
 func (r *userRepository) AssignUserRole(ctx context.Context, userRole *entities.UserRole) error {
+	// Cek apakah user sudah punya role ini
+	var existing entities.UserRole
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND role_id = ?", userRole.UserID, userRole.RoleID).
+		First(&existing).Error
+
+	if err == nil {
+		// Sudah ada, tidak perlu insert ulang
+		return nil
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		// Error lain (misal DB error)
+		return err
+	}
+
+	// Belum ada → insert baru
 	return r.db.WithContext(ctx).Create(userRole).Error
 }
+
+func (r *userRepository) RemoveAllRolesFromUser(ctx context.Context, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Delete(&entities.UserRole{}).Error
+}
+
 
 func (r *userRepository) UpdateUser(ctx context.Context, user *entities.User) error {
 	return r.db.WithContext(ctx).Save(user).Error

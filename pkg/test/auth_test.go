@@ -233,3 +233,8 @@ func TestResetPassword_InvalidToken(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "invalid or expired token")
 }
+
+func (m *MockUserRepo) RemoveAllRolesFromUser(ctx context.Context, userID uuid.UUID) error {
+	args := m.Called(ctx, userID)
+	return args.Error(0)
+}
