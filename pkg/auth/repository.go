@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository interface {
+type AuthRepository interface {
 	FindByEmail(ctx context.Context, email string) (*entities.User, error)
 	CreateUser(ctx context.Context, user *entities.User) error
 	FindRoleByName(ctx context.Context, name string) (*entities.Role, error)
@@ -28,7 +28,7 @@ type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) AuthRepository {
 	return &userRepository{db: db}
 }
 
