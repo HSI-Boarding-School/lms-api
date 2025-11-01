@@ -62,6 +62,8 @@ func ConnectDatabase() {
 		&entities.Question{},
 		&entities.Course{},
 		&entities.CourseModule{},
+		&entities.FeedbackQuestion{},
+		&entities.FeedbackAnswer{},
 	)
 	if err != nil {
 		log.Fatal("❌ Failed to migrate:", err)

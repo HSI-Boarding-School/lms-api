@@ -21,6 +21,5 @@ type Role struct {
 	CreatedAt   time.Time `gorm:"default:now()" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"default:now()" json:"updated_at"`
 
-	// Relasi ke User (many-to-many)
 	Users []*User `gorm:"many2many:user_roles;" json:"-"`
 }

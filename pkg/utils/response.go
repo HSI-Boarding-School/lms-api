@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Struktur response sukses
 type Meta struct {
 	Page    int `json:"page,omitempty"`
 	PerPage int `json:"per_page,omitempty"`
@@ -22,7 +21,6 @@ type SuccessResponse struct {
 	Path      string      `json:"path"`
 }
 
-// Struktur response error
 type FieldError struct {
 	Field    string   `json:"field"`
 	Messages []string `json:"messages"`
@@ -39,7 +37,6 @@ type ErrorResponse struct {
 	Errors     []FieldError `json:"errors,omitempty"`
 }
 
-// Fungsi helper sukses
 func Success(c *fiber.Ctx, status int, message string, data interface{}, meta *Meta) error {
 	resp := SuccessResponse{
 		Status:    status,
@@ -52,7 +49,6 @@ func Success(c *fiber.Ctx, status int, message string, data interface{}, meta *M
 	return c.Status(status).JSON(resp)
 }
 
-// Fungsi helper error
 func Error(c *fiber.Ctx, status int, message string, errType string, fieldErrors []FieldError) error {
 	resp := ErrorResponse{
 		Success:    false,

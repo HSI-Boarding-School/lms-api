@@ -1,19 +1,289 @@
 basePath: /
 definitions:
-  auth.LoginRequest:
+  dto.CreateQuestionRequest:
     properties:
-      email:
-        type: string
-      password:
+      question:
+        example: Apa pendapat Anda tentang pelatihan ini?
         type: string
     type: object
-  auth.RegisterRequest:
+  dto.ForgotPasswordRequest:
     properties:
       email:
+        example: john@example.com
+        type: string
+    type: object
+  dto.GenericResponse:
+    properties:
+      message:
+        example: Operation successful
+        type: string
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: strongpassword123
+        type: string
+    type: object
+  dto.LoginResponse:
+    properties:
+      expires_in:
+        example: "2025-10-18T15:04:05Z"
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user: {}
+    type: object
+  dto.MetaResponse:
+    properties:
+      page:
+        example: 1
+        type: integer
+      per_page:
+        example: 10
+        type: integer
+      total:
+        example: 100
+        type: integer
+    type: object
+  dto.PaginatedUsersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.UserResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/dto.MetaResponse'
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: strongpassword123
+        type: string
+    type: object
+  dto.RegisterResponse:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: a3b2c1d4-56ef-7890-gh12-ijk345lmn678
+        type: string
+      name:
+        example: John Doe
+        type: string
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      new_password:
+        example: newStrongPassword123
+        type: string
+      token:
+        example: "123456"
+        type: string
+    type: object
+  dto.SetRoleRequest:
+    properties:
+      role:
+        example: ADMIN
+        type: string
+    type: object
+  dto.SubmitAnswerRequest:
+    properties:
+      answer:
+        example: Sangat bermanfaat dan jelas
+        type: string
+      question_id:
+        example: b5a1c6c3-1234-4bcd-9123-a12b34cd56ef
+        type: string
+    type: object
+  dto.UserProfileResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      role:
+        type: string
+    type: object
+  dto.UserRoleResponse:
+    properties:
+      email:
+        type: string
+      id:
         type: string
       name:
         type: string
-      password:
+      role:
+        type: string
+    type: object
+  dto.UserStatusResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  entities.FeedbackAnswer:
+    properties:
+      answer:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      question_id:
+        type: string
+      student:
+        $ref: '#/definitions/entities.User'
+      student_id:
+        type: string
+    type: object
+  entities.FeedbackQuestion:
+    properties:
+      answers:
+        items:
+          $ref: '#/definitions/entities.FeedbackAnswer'
+        type: array
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: string
+      question:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  entities.Role:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        $ref: '#/definitions/entities.RoleName'
+      updated_at:
+        type: string
+    type: object
+  entities.RoleName:
+    enum:
+    - ADMIN
+    - TEACHER
+    - STUDENT
+    type: string
+    x-enum-varnames:
+    - ADMIN
+    - TEACHER
+    - STUDENT
+  entities.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/entities.Role'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  utils.ErrorResponse:
+    properties:
+      error:
+        type: string
+      errors:
+        items:
+          $ref: '#/definitions/utils.FieldError'
+        type: array
+      message:
+        type: string
+      path:
+        type: string
+      statusCode:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  utils.FieldError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+      messages:
+        items:
+          type: string
+        type: array
+    type: object
+  utils.Meta:
+    properties:
+      page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  utils.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/utils.Meta'
+      path:
+        type: string
+      status:
+        type: integer
+      timestamp:
         type: string
     type: object
 host: localhost:3000
@@ -27,29 +297,29 @@ paths:
     post:
       consumes:
       - application/json
-      description: Generate reset token and send it to user's email
+      description: Generate reset token dan kirim ke email user
       parameters:
-      - description: Email Request
+      - description: Forgot Password Request
         in: body
         name: request
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.GenericResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
       summary: Request password reset
       tags:
       - Auth
@@ -57,27 +327,29 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticate user and return JWT token
+      description: Autentikasi user dan mendapatkan JWT token
       parameters:
       - description: Login Request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.LoginRequest'
+          $ref: '#/definitions/dto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/utils.ErrorResponse'
       summary: Login user
       tags:
       - Auth
@@ -85,20 +357,22 @@ paths:
     post:
       consumes:
       - application/json
-      description: Invalidate user token
+      description: Mengakhiri sesi dan menonaktifkan token
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.GenericResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Logout user
@@ -108,27 +382,29 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new user account
+      description: Membuat akun user baru
       parameters:
       - description: Register Request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.RegisterRequest'
+          $ref: '#/definitions/dto.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.RegisterResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
       summary: Register a new user
       tags:
       - Auth
@@ -136,16 +412,140 @@ paths:
     post:
       consumes:
       - application/json
-      description: Reset password using valid reset token
+      description: Reset password menggunakan reset token yang valid
       parameters:
       - description: Reset Password Request
         in: body
         name: request
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GenericResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Reset user password
+      tags:
+      - Auth
+  /api/feedback/answers:
+    post:
+      consumes:
+      - application/json
+      description: Mahasiswa mengirimkan jawaban feedback
+      parameters:
+      - description: Answer payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SubmitAnswerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/utils.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Submit feedback answer
+      tags:
+      - Feedback
+  /api/feedback/questions:
+    get:
+      description: Mendapatkan semua pertanyaan feedback
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.FeedbackQuestion'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get all feedback questions
+      tags:
+      - Feedback
+    post:
+      consumes:
+      - application/json
+      description: Admin membuat pertanyaan feedback baru
+      parameters:
+      - description: Question payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateQuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.FeedbackQuestion'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Create new feedback question
+      tags:
+      - Feedback
+  /api/feedback/questions/answers:
+    get:
+      description: Mendapatkan semua pertanyaan beserta jawaban mahasiswa
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.FeedbackQuestion'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get all questions with answers
+      tags:
+      - Feedback
+  /api/health/database:
+    get:
+      description: Check database connection status
       produces:
       - application/json
       responses:
@@ -154,14 +554,202 @@ paths:
           schema:
             additionalProperties: true
             type: object
-        "400":
-          description: Bad Request
+        "503":
+          description: Service Unavailable
           schema:
             additionalProperties: true
             type: object
-      summary: Reset user password
+      summary: Check service health
       tags:
-      - Auth
+      - Health
+  /api/health/redis:
+    get:
+      description: Check database connection status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Check service health
+      tags:
+      - Health
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of all users
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaginatedUsersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get all users
+      tags:
+      - Users
+  /api/users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve user details by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get user by ID
+      tags:
+      - Users
+  /api/users/{id}/activate:
+    put:
+      consumes:
+      - application/json
+      description: Activate a previously deactivated user account
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Activate user
+      tags:
+      - Users
+  /api/users/{id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: Deactivate a user's account by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Deactivate user
+      tags:
+      - Users
+  /api/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Assign or update a user's role
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Set Role Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserRoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Set user role
+      tags:
+      - Users
+  /api/users/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
 schemes:
 - http
 securityDefinitions:

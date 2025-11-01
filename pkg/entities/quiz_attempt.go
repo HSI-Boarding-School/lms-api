@@ -17,7 +17,6 @@ type QuizAttempt struct {
 	CreatedAt   time.Time  `gorm:"default:now()"`
 	UpdatedAt   time.Time  `gorm:"default:now()"`
 
-	// --- Relations ---
 	Quiz    Quiz  `gorm:"foreignKey:QuizID;constraint:OnDelete:CASCADE"`
 	Student User  `gorm:"foreignKey:StudentID;constraint:OnDelete:CASCADE"`
 	Answers []Answer `gorm:"foreignKey:AttemptID"`

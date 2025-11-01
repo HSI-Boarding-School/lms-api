@@ -20,6 +20,5 @@ type User struct {
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 
 
-	// Relasi ke Role (many-to-many)
 	Roles []*Role `gorm:"many2many:user_roles;constraint:OnDelete:CASCADE;" json:"roles,omitempty"`
 }

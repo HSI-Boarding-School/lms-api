@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Enum untuk status logbook
 type StatusType string
 
 const (
@@ -15,7 +14,6 @@ const (
 	StatusLocked    StatusType = "LOCKED"
 )
 
-// Entity LogBook
 type LogBook struct {
 	ID           uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	CourseID     uuid.UUID  `gorm:"type:uuid;not null"`
@@ -28,7 +26,6 @@ type LogBook struct {
 	CreatedAt    time.Time  `gorm:"default:now()"`
 	UpdatedAt    time.Time  `gorm:"default:now()"`
 
-	// --- Relations ---
 	Course  Course  `gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE"`
 	Student User    `gorm:"foreignKey:StudentID;constraint:OnDelete:CASCADE"`
 	Entries []LogBookEntry `gorm:"foreignKey:LogBookID"`

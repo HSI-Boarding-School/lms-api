@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// MaterialType — enum di database ('FILE', 'LINK', 'TEXT')
 type MaterialType string
 
 const (
@@ -16,7 +15,6 @@ const (
 	MaterialTypeText MaterialType = "TEXT"
 )
 
-// Material entity
 type Material struct {
 	ID           uuid.UUID    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
 	ModuleID     uuid.UUID    `gorm:"type:uuid;not null" json:"module_id"`

@@ -16,9 +16,7 @@ type Course struct {
 	CreatedAt      time.Time `gorm:"default:now()" json:"created_at"`
 	UpdatedAt      time.Time `gorm:"default:now()" json:"updated_at"`
 
-	// Relasi ke User (teacher)
 	OwnerTeacher *User `gorm:"foreignKey:OwnerTeacherID;constraint:OnDelete:SET NULL;" json:"owner_teacher,omitempty"`
 
-	// Relasi ke CourseModules (has many)
 	Modules []CourseModule `gorm:"foreignKey:CourseID;constraint:OnDelete:CASCADE;" json:"modules,omitempty"`
 }

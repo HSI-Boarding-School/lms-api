@@ -15,7 +15,6 @@ type Answer struct {
 	CreatedAt  time.Time `gorm:"default:now()"`
 	UpdatedAt  time.Time `gorm:"default:now()"`
 
-	// --- Relations ---
 	Attempt  QuizAttempt `gorm:"foreignKey:AttemptID;constraint:OnDelete:CASCADE"`
 	Question Question    `gorm:"foreignKey:QuestionID;constraint:OnDelete:CASCADE"`
 	Choice   *Choice     `gorm:"foreignKey:ChoiceID"`

@@ -10,14 +10,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository interface {
+type AuthRepository interface {
 	FindByEmail(ctx context.Context, email string) (*entities.User, error)
 	CreateUser(ctx context.Context, user *entities.User) error
 	FindRoleByName(ctx context.Context, name string) (*entities.Role, error)
 	AssignUserRole(ctx context.Context, userRole *entities.UserRole) error
-	UpdateUser(ctx context.Context, user *entities.User) error
-
-	// 🔹 Tambahan untuk Forgot & Reset Password
+	RemoveAllRolesFromUser(ctx context.Context, userID uuid.UUID) error
 	SaveResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error
 	FindByResetToken(ctx context.Context, token string) (*entities.User, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error
@@ -28,13 +26,10 @@ type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) AuthRepository {
 	return &userRepository{db: db}
 }
 
-// ================================================================
-// BASIC USER CRUD
-// ================================================================
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
 	var user entities.User
@@ -62,16 +57,29 @@ func (r *userRepository) FindRoleByName(ctx context.Context, name string) (*enti
 }
 
 func (r *userRepository) AssignUserRole(ctx context.Context, userRole *entities.UserRole) error {
+
+	var existing entities.UserRole
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND role_id = ?", userRole.UserID, userRole.RoleID).
+		First(&existing).Error
+
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
 	return r.db.WithContext(ctx).Create(userRole).Error
 }
 
-func (r *userRepository) UpdateUser(ctx context.Context, user *entities.User) error {
-	return r.db.WithContext(ctx).Save(user).Error
+func (r *userRepository) RemoveAllRolesFromUser(ctx context.Context, userID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Delete(&entities.UserRole{}).Error
 }
 
-// ================================================================
-// FORGOT & RESET PASSWORD (REAL DYNAMIC VERSION)
-// ================================================================
 
 func (r *userRepository) SaveResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error {
 	return r.db.WithContext(ctx).Model(&entities.User{}).
