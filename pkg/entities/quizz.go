@@ -19,7 +19,6 @@ type Quiz struct {
 	CreatedAt       time.Time  `gorm:"default:now()"`
 	UpdatedAt       time.Time  `gorm:"default:now()"`
 
-	// --- Relations ---
 	Module    CourseModule  `gorm:"foreignKey:ModuleID;constraint:OnDelete:CASCADE"`
 	Questions []Question    `gorm:"foreignKey:QuizID"`
 }

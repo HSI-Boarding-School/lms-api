@@ -15,6 +15,5 @@ type Choice struct {
 	CreatedAt  time.Time `gorm:"default:now()"`
 	UpdatedAt  time.Time `gorm:"default:now()"`
 
-	// --- Relations ---
 	Question Question `gorm:"foreignKey:QuestionID;constraint:OnDelete:CASCADE"`
 }

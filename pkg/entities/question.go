@@ -15,6 +15,5 @@ type Question struct {
 	CreatedAt time.Time `gorm:"default:now()"`
 	UpdatedAt time.Time `gorm:"default:now()"`
 
-	// --- Relations ---
 	Quiz Quiz `gorm:"foreignKey:QuizID;constraint:OnDelete:CASCADE"`
 }

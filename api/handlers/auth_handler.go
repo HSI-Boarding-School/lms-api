@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"api-shiners/api/handlers/dto"
 	"api-shiners/pkg/auth"
 	"api-shiners/pkg/utils"
 	"context"
@@ -10,7 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// AuthController handles authentication related endpoints
 type AuthController struct {
 	authService auth.AuthService
 }
@@ -19,17 +19,16 @@ func NewAuthController(authService auth.AuthService) AuthController {
 	return AuthController{authService: authService}
 }
 
-// ==================== REGISTER ====================
 
-// Register godoc
 // @Summary Register a new user
-// @Description Create a new user account
+// @Description Membuat akun user baru
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body auth.RegisterRequest true "Register Request"
-// @Success 201 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
+// @Param request body dto.RegisterRequest true "Register Request"
+// @Success 201 {object} dto.RegisterResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/register [post]
 func (ctrl *AuthController) Register(c *fiber.Ctx) error {
 	var req auth.RegisterRequest
@@ -45,17 +44,16 @@ func (ctrl *AuthController) Register(c *fiber.Ctx) error {
 	return utils.Success(c, http.StatusCreated, "User registered successfully", createdUser, nil)
 }
 
-// ==================== LOGIN ====================
 
-// Login godoc
 // @Summary Login user
-// @Description Authenticate user and return JWT token
+// @Description Autentikasi user dan mendapatkan JWT token
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body auth.LoginRequest true "Login Request"
-// @Success 200 {object} map[string]interface{}
-// @Failure 401 {object} map[string]interface{}
+// @Param request body dto.LoginRequest true "Login Request"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
 // @Router /api/auth/login [post]
 func (ctrl *AuthController) Login(c *fiber.Ctx) error {
 	var req auth.LoginRequest
@@ -63,31 +61,36 @@ func (ctrl *AuthController) Login(c *fiber.Ctx) error {
 		return utils.Error(c, http.StatusBadRequest, "Invalid request body", "BadRequestException", nil)
 	}
 
-	token, exp, err := ctrl.authService.Login(context.Background(), req)
+	user, token, exp, permissions, err := ctrl.authService.LoginCore(context.Background(), req)
 	if err != nil {
 		return utils.Error(c, http.StatusUnauthorized, err.Error(), "UnauthorizedException", nil)
 	}
 
 	data := fiber.Map{
-		"token":       token,
-		"expires_in":  exp.Format(time.RFC3339),
-		"token_type":  "Bearer",
+		"token":      token,
+		"expires_in": exp.Format(time.RFC3339),
+		"token_type": "Bearer",
+		"user": fiber.Map{
+			"id":          user.ID,
+			"name":        user.Name,
+			"role":        user.Roles,
+			"permissions": permissions,
+		},
 	}
 
 	return utils.Success(c, http.StatusOK, "Login successful", data, nil)
 }
 
-// ==================== LOGOUT ====================
 
-// Logout godoc
 // @Summary Logout user
-// @Description Invalidate user token
+// @Description Mengakhiri sesi dan menonaktifkan token
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
+// @Success 200 {object} dto.GenericResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
 // @Router /api/auth/logout [post]
 func (ctrl *AuthController) Logout(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
@@ -107,22 +110,19 @@ func (ctrl *AuthController) Logout(c *fiber.Ctx) error {
 	return utils.Success(c, http.StatusOK, "Logout successful", nil, nil)
 }
 
-// ==================== FORGOT PASSWORD ====================
 
-// ForgotPassword godoc
 // @Summary Request password reset
-// @Description Generate reset token and send it to user's email
+// @Description Generate reset token dan kirim ke email user
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body map[string]string true "Email Request"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
+// @Param request body dto.ForgotPasswordRequest true "Forgot Password Request"
+// @Success 200 {object} dto.GenericResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/forgot-password [post]
 func (ctrl *AuthController) ForgotPassword(c *fiber.Ctx) error {
-	var req struct {
-		Email string `json:"email"`
-	}
+	var req dto.ForgotPasswordRequest
 	if err := c.BodyParser(&req); err != nil || req.Email == "" {
 		return utils.Error(c, http.StatusBadRequest, "Email is required", "BadRequestException", nil)
 	}
@@ -134,27 +134,23 @@ func (ctrl *AuthController) ForgotPassword(c *fiber.Ctx) error {
 
 	return utils.Success(c, http.StatusOK, "Password reset token generated", fiber.Map{
 		"email": req.Email,
-		"token": token, // tampilkan untuk testing
+		"token": token, // ditampilkan untuk keperluan testing
 	}, nil)
 }
 
-// ==================== RESET PASSWORD ====================
 
-// ResetPassword godoc
 // @Summary Reset user password
-// @Description Reset password using valid reset token
+// @Description Reset password menggunakan reset token yang valid
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param request body map[string]string true "Reset Password Request"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
+// @Param request body dto.ResetPasswordRequest true "Reset Password Request"
+// @Success 200 {object} dto.GenericResponse
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/reset-password [post]
 func (ctrl *AuthController) ResetPassword(c *fiber.Ctx) error {
-	var req struct {
-		Token       string `json:"token"`
-		NewPassword string `json:"new_password"`
-	}
+	var req dto.ResetPasswordRequest
 	if err := c.BodyParser(&req); err != nil || req.Token == "" || req.NewPassword == "" {
 		return utils.Error(c, http.StatusBadRequest, "Token and new password required", "BadRequestException", nil)
 	}

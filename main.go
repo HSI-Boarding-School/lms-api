@@ -19,6 +19,7 @@ import (
 	"api-shiners/api/routes"
 	"api-shiners/pkg/auth"
 	"api-shiners/pkg/config"
+	"api-shiners/pkg/feedback"
 	"api-shiners/pkg/user"
 
 	_ "api-shiners/docs"
@@ -68,6 +69,11 @@ func main() {
 	userService := user.NewUserService(userRepo, authRepo)
 	userController := handlers.NewUserController(userService)
 
+	feedbackRepo := feedback.NewFeedbackRepository(config.DB)
+	feedbackService := feedback.NewFeedbackService(feedbackRepo)
+	feedbackController := handlers.NewFeedbackController(feedbackService)
+
+	routes.FeedbackRoutes(app, feedbackController)
 	routes.UserRoutes(app, userController)
 	routes.HealthRoutes(app, healthController)
 	routes.AuthRoutes(app, authController)
