@@ -18,8 +18,8 @@ import (
 	"api-shiners/api/handlers"
 	"api-shiners/api/routes"
 	"api-shiners/pkg/auth"
-	"api-shiners/pkg/user"
 	"api-shiners/pkg/config"
+	"api-shiners/pkg/user"
 
 	_ "api-shiners/docs"
 
@@ -65,7 +65,7 @@ func main() {
 	healthController := handlers.NewHealthController()
 
 	userRepo := user.NewUserRepository(config.DB)
-	userService := user.NewUserService(userRepo)
+	userService := user.NewUserService(userRepo, authRepo)
 	userController := handlers.NewUserController(userService)
 
 	routes.UserRoutes(app, userController)

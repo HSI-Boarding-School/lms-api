@@ -11,4 +11,6 @@ func UserRoutes(app *fiber.App, userController *handlers.UserController) {
 	api := app.Group("/api")
 	api.Get("/users", middleware.AdminMiddleware, userController.GetAllUsers)
 	api.Get("/users/:id", middleware.AuthMiddleware, userController.GetUserByID)
+
+	api.Post("/users/:id/role", middleware.AdminMiddleware, userController.SetUserRole)
 }

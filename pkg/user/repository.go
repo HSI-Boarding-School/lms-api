@@ -31,3 +31,7 @@ func (r *userRepository) GetByID(id uuid.UUID) (entities.User, error) {
 	err := r.db.Preload("Roles").First(&user, "id = ?", id).Error
 	return user, err
 }
+
+
+
+
