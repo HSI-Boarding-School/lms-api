@@ -14,9 +14,13 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers() ([]entities.User, error)
+	GetAllUsers(page, perPage int) ([]entities.User, int64, error)
 	GetUserByID(id uuid.UUID) (entities.User, error)
 	SetUserRole(ctx context.Context, userID uuid.UUID, roleName string) (*entities.User, error)
+	DeactivateUser(ctx context.Context, userID uuid.UUID) (*entities.User, error)
+	ActivateUser(ctx context.Context, userID uuid.UUID) (*entities.User, error)
+	GetProfile(ctx context.Context, userID string) (*entities.User, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, name, email string) (*entities.User, error)
 }
 
 type userService struct {
@@ -24,7 +28,6 @@ type userService struct {
 	authRepo auth.AuthRepository
 }
 
-// ✅ Constructor tunggal — wajib dipakai
 func NewUserService(userRepo UserRepository, authRepo auth.AuthRepository) UserService {
 	return &userService{
 		userRepo: userRepo,
@@ -32,39 +35,46 @@ func NewUserService(userRepo UserRepository, authRepo auth.AuthRepository) UserS
 	}
 }
 
-// ===== GET ALL USERS (dengan caching Redis opsional) =====
-func (s *userService) GetAllUsers() ([]entities.User, error) {
+
+func (s *userService) GetAllUsers(page, perPage int) ([]entities.User, int64, error) {
 	ctx := context.Background()
-	cacheKey := "users:all"
+	cacheKey := fmt.Sprintf("users:page:%d:perpage:%d", page, perPage)
 
 	var users []entities.User
+	var total int64
 
-	// 🔹 Coba ambil dari Redis
 	if config.RedisClient != nil {
 		val, err := config.RedisClient.Get(ctx, cacheKey).Result()
 		if err == nil && val != "" {
-			if err := json.Unmarshal([]byte(val), &users); err == nil {
-				return users, nil
+			var cached struct {
+				Users []entities.User `json:"users"`
+				Total int64           `json:"total"`
+			}
+			if err := json.Unmarshal([]byte(val), &cached); err == nil {
+				return cached.Users, cached.Total, nil
 			}
 		}
 	}
 
-	// 🔹 Ambil dari DB
-	users, err := s.userRepo.GetAll()
+	users, total, err := s.userRepo.GetAll(page, perPage)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	// 🔹 Simpan ke Redis
 	if config.RedisClient != nil {
-		data, _ := json.Marshal(users)
+		cached := struct {
+			Users []entities.User `json:"users"`
+			Total int64           `json:"total"`
+		}{Users: users, Total: total}
+
+		data, _ := json.Marshal(cached)
 		config.RedisClient.Set(ctx, cacheKey, data, 5*time.Minute)
 	}
 
-	return users, nil
+	return users, total, nil
 }
 
-// ===== GET USER BY ID =====
+
 func (s *userService) GetUserByID(id uuid.UUID) (entities.User, error) {
 	ctx := context.Background()
 	cacheKey := fmt.Sprintf("user:%s", id.String())
@@ -93,31 +103,26 @@ func (s *userService) GetUserByID(id uuid.UUID) (entities.User, error) {
 	return user, nil
 }
 
-// ===== SET USER ROLE =====
 func (s *userService) SetUserRole(ctx context.Context, userID uuid.UUID, roleName string) (*entities.User, error) {
-	// Cek dependency dulu
+
 	if s.userRepo == nil || s.authRepo == nil {
 		return nil, errors.New("userRepo atau authRepo belum diinisialisasi dengan benar")
 	}
 
-	// 1. Cari user berdasarkan ID
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
 
-	// 2. Cari role berdasarkan nama
 	role, err := s.authRepo.FindRoleByName(ctx, roleName)
 	if err != nil {
 		return nil, errors.New("role not found")
 	}
 
-	// 3. Hapus semua role lama user
 	if err := s.authRepo.RemoveAllRolesFromUser(ctx, user.ID); err != nil {
 		return nil, fmt.Errorf("failed to clear old roles: %v", err)
 	}
 
-	// 4. Tambahkan role baru
 	userRole := &entities.UserRole{
 		UserID: user.ID,
 		RoleID: role.ID,
@@ -126,7 +131,6 @@ func (s *userService) SetUserRole(ctx context.Context, userID uuid.UUID, roleNam
 		return nil, err
 	}
 
-	// 5. Ambil ulang user untuk dikembalikan (dengan role terbaru)
 	updatedUser, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return nil, err
@@ -134,4 +138,67 @@ func (s *userService) SetUserRole(ctx context.Context, userID uuid.UUID, roleNam
 
 	return &updatedUser, nil
 }
+
+func (s *userService) DeactivateUser(ctx context.Context, userID uuid.UUID) (*entities.User, error) {
+
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if err := s.userRepo.DeactivateUser(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	user.IsActive = false
+
+	return &user, nil
+}
+
+func (s *userService) ActivateUser(ctx context.Context, userID uuid.UUID) (*entities.User, error) {
+
+	user, err := s.userRepo.GetByID(userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if err := s.userRepo.ActivateUser(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	user.IsActive = true
+
+	return &user, nil
+}
+
+
+func (s *userService) GetProfile(ctx context.Context, userID string) (*entities.User, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.userRepo.GetByID(uid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (s *userService) UpdateProfile(ctx context.Context, userID uuid.UUID, name, email string) (*entities.User, error) {
+	if name == "" || email == "" {
+		return nil, errors.New("name and email are required")
+	}
+
+	user, err := s.userRepo.UpdateProfile(ctx, userID, name, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+
+
 

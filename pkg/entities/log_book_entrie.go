@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Entity LogBookEntry
 type LogBookEntry struct {
 	ID         uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	LogBookID  uuid.UUID `gorm:"type:uuid;not null"`
@@ -15,6 +14,5 @@ type LogBookEntry struct {
 	CreatedAt  time.Time `gorm:"default:now()"`
 	UpdatedAt  time.Time `gorm:"default:now()"`
 
-	// --- Relation ---
 	LogBook LogBook `gorm:"foreignKey:LogBookID;constraint:OnDelete:CASCADE"`
 }

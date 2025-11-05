@@ -28,6 +28,7 @@ type LoginRequest struct {
 type AuthService interface {
 	Register(ctx context.Context, req RegisterRequest) (*entities.User, error)
 	Login(ctx context.Context, req LoginRequest) (string, time.Time, error)
+	LoginCore(ctx context.Context, req LoginRequest) (*entities.User, string, time.Time, []string, error)
 	Logout(ctx context.Context, token string) error
 	GenerateResetToken(ctx context.Context, email string) (string, error)
 	ResetPassword(ctx context.Context, token, newPassword string) error
@@ -41,17 +42,13 @@ func NewAuthService(userRepo AuthRepository) AuthService {
 	return &authService{userRepo: userRepo}
 }
 
-// =============================
-// REGISTER
-// =============================
 func (s *authService) Register(ctx context.Context, req RegisterRequest) (*entities.User, error) {
-	// Cek duplikasi email
+
 	existing, _ := s.userRepo.FindByEmail(ctx, req.Email)
 	if existing != nil {
 		return nil, errors.New("email already registered")
 	}
 
-	// Hash password
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	user := &entities.User{
@@ -65,7 +62,6 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*entit
 		return nil, err
 	}
 
-	// Assign role default: STUDENT
 	role, err := s.userRepo.FindRoleByName(ctx, string(entities.STUDENT))
 	if err == nil {
 		_ = s.userRepo.AssignUserRole(ctx, &entities.UserRole{
@@ -77,56 +73,65 @@ func (s *authService) Register(ctx context.Context, req RegisterRequest) (*entit
 	return user, nil
 }
 
-// =============================
-// LOGIN (Generate JWT Token)
-// =============================
+
 func (s *authService) Login(ctx context.Context, req LoginRequest) (string, time.Time, error) {
+	_, token, exp, _, err := s.LoginCore(ctx, req)
+	return token, exp, err
+}
+
+func (s *authService) LoginCore(ctx context.Context, req LoginRequest) (*entities.User, string, time.Time, []string, error) {
 	user, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return "", time.Time{}, errors.New("invalid email or password")
+		return nil, "", time.Time{}, nil, errors.New("invalid email or password")
+	}
+
+	if !user.IsActive {
+		return nil, "", time.Time{}, nil, errors.New("account is deactivated, please contact admin")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		return "", time.Time{}, errors.New("invalid email or password")
+		return nil, "", time.Time{}, nil, errors.New("invalid email or password")
 	}
 
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		return "", time.Time{}, errors.New("JWT_SECRET not set in environment")
+		return nil, "", time.Time{}, nil, errors.New("JWT_SECRET not set in environment")
 	}
 
 	expiration := time.Now().Add(24 * time.Hour)
-
 	if os.Getenv("JWT_EXPIRE_HOURS") != "" {
 		if d, err := time.ParseDuration(os.Getenv("JWT_EXPIRE_HOURS") + "h"); err == nil {
 			expiration = time.Now().Add(d)
 		}
 	}
 
-	rememberMe := false
-	if val, ok := ctx.Value("remember_me").(bool); ok {
-		rememberMe = val
-	}
-	if rememberMe {
-		expiration = time.Now().Add(7 * 24 * time.Hour)
+	// Ambil role utama user
+	roleName := ""
+	if len(user.Roles) > 0 {
+		roleName = string(user.Roles[0].Name) // ✅ fix type RoleName jadi string
 	}
 
+	// Ambil permissions dari utils
+	permissions := utils.GetPermissionsByRole(roleName)
+
+	// Buat JWT
 	claims := jwt.MapClaims{
 		"user_id": user.ID.String(),
 		"email":   user.Email,
 		"exp":     expiration.Unix(),
 		"iat":     time.Now().Unix(),
-		"roles":   user.Roles,
+		"roles":   roleName,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to generate token: %v", err)
+		return nil, "", time.Time{}, nil, fmt.Errorf("failed to generate token: %v", err)
 	}
 
-	return signedToken, expiration, nil
+	return user, signedToken, expiration, permissions, nil
 }
+
 
 
 // LOGOUT
