@@ -11,11 +11,12 @@ func FeedbackRoutes(app *fiber.App, feedbackController *handlers.FeedbackControl
 	api := app.Group("/api")
 
 	api.Post("/feedback/questions",middleware.TeacherMiddleware, feedbackController.CreateQuestion)
-	api.Get("/feedback/questions", middleware.AuthMiddleware, feedbackController.GetAllQuestions)
 	
 	api.Post("/feedback/answers", middleware.AuthMiddleware, feedbackController.SubmitAnswer)
 
 	api.Get("/feedback/teacher", middleware.TeacherMiddleware, feedbackController.GetQuestionsWithAnswersByTeacher)
+
+	api.Get("/feedback/questions/:teacher_id", middleware.AuthMiddleware, feedbackController.GetFeedbackByTeacher)
 }
 
 

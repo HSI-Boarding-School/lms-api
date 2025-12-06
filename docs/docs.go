@@ -370,24 +370,47 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/feedback/questions/answers": {
+        "/api/feedback/teacher": {
             "get": {
-                "description": "Mendapatkan semua pertanyaan beserta jawaban mahasiswa",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menampilkan semua pertanyaan feedback yang dibuat oleh teacher yang sedang login, beserta jawaban dari setiap student",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Feedback"
                 ],
-                "summary": "Get all questions with answers",
+                "summary": "Get feedback questions with student answers (by teacher)",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of feedback questions with student answers",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/entities.FeedbackQuestion"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.FeedbackQuestionWithAnswersResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.ErrorResponse"
                         }
                     },
                     "500": {
@@ -728,6 +751,94 @@ const docTemplate = `{
                 "question": {
                     "type": "string",
                     "example": "Apa pendapat Anda tentang pelatihan ini?"
+                }
+            }
+        },
+        "dto.FeedbackAnswerWithStudentResponse": {
+            "type": "object",
+            "properties": {
+                "answer": {
+                    "type": "string",
+                    "example": "halo mas"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-10-31T16:28:34.496183+07:00"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "abf397fe-76b9-4222-8d1e-2d51c6be6f9b"
+                },
+                "question_id": {
+                    "type": "string",
+                    "example": "0bd98683-6f80-47d8-9017-b15106ba9b53"
+                },
+                "student": {
+                    "$ref": "#/definitions/dto.FeedbackStudentResponse"
+                },
+                "student_id": {
+                    "type": "string",
+                    "example": "aa5bada7-1063-4817-b31d-3a62f233e20f"
+                }
+            }
+        },
+        "dto.FeedbackQuestionWithAnswersResponse": {
+            "type": "object",
+            "properties": {
+                "answers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.FeedbackAnswerWithStudentResponse"
+                    }
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-10-30T17:05:09.051049+07:00"
+                },
+                "created_by": {
+                    "type": "string",
+                    "example": "b7dfe843-4297-4d13-b666-d865df01ecbc"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "b5451826-53d0-4904-93e8-3a88e08952f7"
+                },
+                "question": {
+                    "type": "string",
+                    "example": "Bagaimana kelas baru nyaaaaa?"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-10-30T17:05:09.051049+07:00"
+                }
+            }
+        },
+        "dto.FeedbackStudentResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-10-31T10:06:20.249632+07:00"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "guru2@gmail.com"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "aa5bada7-1063-4817-b31d-3a62f233e20f"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Guru 2"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2025-10-31T16:43:55.96876+07:00"
                 }
             }
         },
