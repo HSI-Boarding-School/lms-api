@@ -62,24 +62,6 @@ func (h *FeedbackController) CreateQuestion(c *fiber.Ctx) error {
 }
 
 
-// @Summary Get all feedback questions
-// @Description Mendapatkan semua pertanyaan feedback
-// @Tags Feedback
-// @Produce json
-// @Success 200 {array} entities.FeedbackQuestion
-// @Failure 500 {object} utils.ErrorResponse
-// @Router /api/feedback/questions [get]
-func (h *FeedbackController) GetAllQuestions(c *fiber.Ctx) error {
-	ctx := context.Background()
-	questions, err := h.service.GetAllQuestions(ctx)
-	if err != nil {
-		return utils.Error(c, http.StatusInternalServerError, "Failed to get questions", "InternalServerError", nil)
-	}
-
-	return utils.Success(c, http.StatusOK, "Get all feedback questions successfully", questions, nil)
-}
-
-
 // @Summary Submit feedback answer
 // @Description Mahasiswa mengirimkan jawaban feedback
 // @Tags Feedback
@@ -126,6 +108,15 @@ func (h *FeedbackController) SubmitAnswer(c *fiber.Ctx) error {
 
 
 
+// @Summary Get feedback questions with student answers (by teacher)
+// @Description Menampilkan semua pertanyaan feedback yang dibuat oleh teacher yang sedang login, beserta jawaban dari setiap student
+// @Tags Feedback
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} utils.SuccessResponse{data=[]dto.FeedbackQuestionWithAnswersResponse} "List of feedback questions with student answers"
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized"
+// @Failure 500 {object} utils.ErrorResponse "Internal Server Error"
+// @Router /api/feedback/teacher [get]
 func (h *FeedbackController) GetQuestionsWithAnswersByTeacher(c *fiber.Ctx) error {
 	userIDStr := c.Locals("user_id")
 	if userIDStr == nil {
@@ -145,3 +136,20 @@ func (h *FeedbackController) GetQuestionsWithAnswersByTeacher(c *fiber.Ctx) erro
 
 	return utils.Success(c, http.StatusOK, "Get feedback with answers successfully", questions, nil)
 }
+
+func (h *FeedbackController) GetFeedbackByTeacher(c *fiber.Ctx) error {
+	teacherIDParam := c.Params("teacher_id")
+	teacherID, err := uuid.Parse(teacherIDParam)
+	if err != nil {
+		return utils.Error(c, http.StatusBadRequest, "Invalid teacher ID", "InvalidUUID", nil)
+	}
+
+	feedbacks, err := h.service.GetFeedbackByTeacher(teacherID)
+	if err != nil {
+		return utils.Error(c, http.StatusInternalServerError, err.Error(), "InternalServerError", nil)
+	}
+
+	return utils.Success(c, http.StatusOK, "Get feedback questions by teacher successfully", feedbacks, nil)
+}
+
+

@@ -6,6 +6,69 @@ definitions:
         example: Apa pendapat Anda tentang pelatihan ini?
         type: string
     type: object
+  dto.FeedbackAnswerWithStudentResponse:
+    properties:
+      answer:
+        example: halo mas
+        type: string
+      created_at:
+        example: "2025-10-31T16:28:34.496183+07:00"
+        type: string
+      id:
+        example: abf397fe-76b9-4222-8d1e-2d51c6be6f9b
+        type: string
+      question_id:
+        example: 0bd98683-6f80-47d8-9017-b15106ba9b53
+        type: string
+      student:
+        $ref: '#/definitions/dto.FeedbackStudentResponse'
+      student_id:
+        example: aa5bada7-1063-4817-b31d-3a62f233e20f
+        type: string
+    type: object
+  dto.FeedbackQuestionWithAnswersResponse:
+    properties:
+      answers:
+        items:
+          $ref: '#/definitions/dto.FeedbackAnswerWithStudentResponse'
+        type: array
+      created_at:
+        example: "2025-10-30T17:05:09.051049+07:00"
+        type: string
+      created_by:
+        example: b7dfe843-4297-4d13-b666-d865df01ecbc
+        type: string
+      id:
+        example: b5451826-53d0-4904-93e8-3a88e08952f7
+        type: string
+      question:
+        example: Bagaimana kelas baru nyaaaaa?
+        type: string
+      updated_at:
+        example: "2025-10-30T17:05:09.051049+07:00"
+        type: string
+    type: object
+  dto.FeedbackStudentResponse:
+    properties:
+      created_at:
+        example: "2025-10-31T10:06:20.249632+07:00"
+        type: string
+      email:
+        example: guru2@gmail.com
+        type: string
+      id:
+        example: aa5bada7-1063-4817-b31d-3a62f233e20f
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: Guru 2
+        type: string
+      updated_at:
+        example: "2025-10-31T16:43:55.96876+07:00"
+        type: string
+    type: object
   dto.ForgotPasswordRequest:
     properties:
       email:
@@ -524,23 +587,35 @@ paths:
       summary: Create new feedback question
       tags:
       - Feedback
-  /api/feedback/questions/answers:
+  /api/feedback/teacher:
     get:
-      description: Mendapatkan semua pertanyaan beserta jawaban mahasiswa
+      description: Menampilkan semua pertanyaan feedback yang dibuat oleh teacher
+        yang sedang login, beserta jawaban dari setiap student
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of feedback questions with student answers
           schema:
-            items:
-              $ref: '#/definitions/entities.FeedbackQuestion'
-            type: array
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.FeedbackQuestionWithAnswersResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
-      summary: Get all questions with answers
+      security:
+      - BearerAuth: []
+      summary: Get feedback questions with student answers (by teacher)
       tags:
       - Feedback
   /api/health/database:

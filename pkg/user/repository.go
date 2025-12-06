@@ -79,9 +79,3 @@ func (r *userRepository) ActivateUser(ctx context.Context, userID uuid.UUID) err
 		Where("id = ?", userID).
 		Update("is_active", true).Error
 }
-
-
-
-
-
-
