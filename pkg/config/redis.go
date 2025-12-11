@@ -15,9 +15,18 @@ func InitRedis() {
 	// Gunakan env untuk mode
 	mode := os.Getenv("APP_MODE") // contoh: dev / prod
 
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "localhost"
+	}
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		redisPort = "6379"
+	}
+
 	opt := &redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     redisHost + ":" + redisPort,
+		Password: os.Getenv("REDIS_PASSWORD"),
 		DB:       0,
 	}
 
