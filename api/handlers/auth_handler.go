@@ -20,13 +20,14 @@ func NewAuthController(authService auth.AuthService) AuthController {
 }
 
 
+// Register godoc
 // @Summary Register a new user
 // @Description Membuat akun user baru
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body dto.RegisterRequest true "Register Request"
-// @Success 201 {object} dto.RegisterResponse
+// @Success 201 {object} utils.SuccessResponse{data=dto.RegisterResponse}
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/register [post]
@@ -45,13 +46,14 @@ func (ctrl *AuthController) Register(c *fiber.Ctx) error {
 }
 
 
+// Login godoc
 // @Summary Login user
 // @Description Autentikasi user dan mendapatkan JWT token
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body dto.LoginRequest true "Login Request"
-// @Success 200 {object} dto.LoginResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.LoginResponse}
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Router /api/auth/login [post]
@@ -82,13 +84,14 @@ func (ctrl *AuthController) Login(c *fiber.Ctx) error {
 }
 
 
+// Logout godoc
 // @Summary Logout user
 // @Description Mengakhiri sesi dan menonaktifkan token
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} dto.GenericResponse
+// @Success 200 {object} utils.SuccessResponse
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Router /api/auth/logout [post]
@@ -111,13 +114,14 @@ func (ctrl *AuthController) Logout(c *fiber.Ctx) error {
 }
 
 
+// ForgotPassword godoc
 // @Summary Request password reset
 // @Description Generate reset token dan kirim ke email user
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body dto.ForgotPasswordRequest true "Forgot Password Request"
-// @Success 200 {object} dto.GenericResponse
+// @Success 200 {object} utils.SuccessResponse
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/forgot-password [post]
@@ -139,13 +143,14 @@ func (ctrl *AuthController) ForgotPassword(c *fiber.Ctx) error {
 }
 
 
+// ResetPassword godoc
 // @Summary Reset user password
 // @Description Reset password menggunakan reset token yang valid
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body dto.ResetPasswordRequest true "Reset Password Request"
-// @Success 200 {object} dto.GenericResponse
+// @Success 200 {object} utils.SuccessResponse
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/auth/reset-password [post]

@@ -22,13 +22,15 @@ func NewUserController(userService user.UserService) *UserController {
 
 // GetAllUsers godoc
 // @Summary Get all users
-// @Description Retrieve a paginated list of all users
+// @Description Retrieve a paginated list of all users (Admin only)
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param page query int false "Page number"
-// @Param per_page query int false "Items per page"
-// @Success 200 {object} dto.PaginatedUsersResponse
+// @Security BearerAuth
+// @Param page query int false "Page number" default(1)
+// @Param per_page query int false "Items per page" default(10)
+// @Success 200 {object} utils.SuccessResponse{data=dto.PaginatedUsersResponse}
+// @Failure 401 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/users [get]
 func (ctrl *UserController) GetAllUsers(c *fiber.Ctx) error {
@@ -79,9 +81,11 @@ func (ctrl *UserController) GetAllUsers(c *fiber.Ctx) error {
 // @Tags Users
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param id path string true "User ID"
-// @Success 200 {object} dto.UserResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserResponse}
 // @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
 // @Router /api/users/{id} [get]
 func (ctrl *UserController) GetUserByID(c *fiber.Ctx) error {
@@ -108,16 +112,17 @@ func (ctrl *UserController) GetUserByID(c *fiber.Ctx) error {
 
 // SetUserRole godoc
 // @Summary Set user role
-// @Description Assign or update a user's role
+// @Description Assign or update a user's role (Admin only)
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "User ID"
 // @Param request body dto.SetRoleRequest true "Set Role Request"
-// @Success 200 {object} dto.UserRoleResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserRoleResponse}
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /api/users/{id}/role [put]
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /api/users/{id}/role [post]
 func (ctrl *UserController) SetUserRole(c *fiber.Ctx) error {
 	var req dto.SetRoleRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -151,15 +156,16 @@ func (ctrl *UserController) SetUserRole(c *fiber.Ctx) error {
 
 // DeactivateUser godoc
 // @Summary Deactivate user
-// @Description Deactivate a user's account by ID
+// @Description Deactivate a user's account by ID (Admin only)
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "User ID"
-// @Success 200 {object} dto.UserStatusResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserStatusResponse}
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /api/users/{id}/deactivate [put]
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /api/users/{id}/deactivate [post]
 func (ctrl *UserController) DeactivateUser(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -184,15 +190,16 @@ func (ctrl *UserController) DeactivateUser(c *fiber.Ctx) error {
 
 // ActivateUser godoc
 // @Summary Activate user
-// @Description Activate a previously deactivated user account
+// @Description Activate a previously deactivated user account (Admin only)
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "User ID"
-// @Success 200 {object} dto.UserStatusResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserStatusResponse}
 // @Failure 400 {object} utils.ErrorResponse
-// @Router /api/users/{id}/activate [put]
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /api/users/{id}/activate [post]
 func (ctrl *UserController) ActivateUser(c *fiber.Ctx) error {
 	userID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -222,10 +229,10 @@ func (ctrl *UserController) ActivateUser(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} dto.UserProfileResponse
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserProfileResponse}
 // @Failure 401 {object} utils.ErrorResponse
 // @Failure 404 {object} utils.ErrorResponse
-// @Router /api/users/profile [get]
+// @Router /api/profile [get]
 func (ctrl *UserController) Profile(c *fiber.Ctx) error {
 	userID := c.Locals("user_id")
 	if userID == nil {
@@ -254,10 +261,23 @@ func (ctrl *UserController) Profile(c *fiber.Ctx) error {
 }
 
 type UpdateProfileRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name  string `json:"name" example:"John Doe"`
+	Email string `json:"email" example:"john@example.com"`
 }
 
+// UpdateProfile godoc
+// @Summary Update user profile
+// @Description Update authenticated user's profile information
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body UpdateProfileRequest true "Update Profile Request"
+// @Success 200 {object} utils.SuccessResponse{data=dto.UserResponse}
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /api/profile [put]
 func (h *UserController) UpdateProfile(c *fiber.Ctx) error {
 	userIDStr := c.Locals("user_id")
 	if userIDStr == nil {

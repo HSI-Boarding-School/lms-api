@@ -20,13 +20,15 @@ func NewFeedbackController(service feedback.FeedbackService) *FeedbackController
 }
 
 
+// CreateQuestion godoc
 // @Summary Create new feedback question
-// @Description Admin membuat pertanyaan feedback baru
+// @Description Teacher membuat pertanyaan feedback baru (Teacher only)
 // @Tags Feedback
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body dto.CreateQuestionRequest true "Question payload"
-// @Success 201 {object} entities.FeedbackQuestion
+// @Success 201 {object} utils.SuccessResponse{data=dto.FeedbackQuestionWithAnswersResponse}
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 401 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
@@ -62,11 +64,13 @@ func (h *FeedbackController) CreateQuestion(c *fiber.Ctx) error {
 }
 
 
+// SubmitAnswer godoc
 // @Summary Submit feedback answer
 // @Description Mahasiswa mengirimkan jawaban feedback
 // @Tags Feedback
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param request body dto.SubmitAnswerRequest true "Answer payload"
 // @Success 201 {object} utils.SuccessResponse
 // @Failure 400 {object} utils.ErrorResponse
@@ -137,6 +141,18 @@ func (h *FeedbackController) GetQuestionsWithAnswersByTeacher(c *fiber.Ctx) erro
 	return utils.Success(c, http.StatusOK, "Get feedback with answers successfully", questions, nil)
 }
 
+// GetFeedbackByTeacher godoc
+// @Summary Get feedback questions by teacher ID
+// @Description Menampilkan semua pertanyaan feedback berdasarkan teacher ID
+// @Tags Feedback
+// @Produce json
+// @Security BearerAuth
+// @Param teacher_id path string true "Teacher ID"
+// @Success 200 {object} utils.SuccessResponse{data=[]dto.FeedbackQuestionWithAnswersResponse}
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /api/feedback/questions/{teacher_id} [get]
 func (h *FeedbackController) GetFeedbackByTeacher(c *fiber.Ctx) error {
 	teacherIDParam := c.Params("teacher_id")
 	teacherID, err := uuid.Parse(teacherIDParam)

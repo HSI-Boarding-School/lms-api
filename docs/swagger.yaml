@@ -75,12 +75,6 @@ definitions:
         example: john@example.com
         type: string
     type: object
-  dto.GenericResponse:
-    properties:
-      message:
-        example: Operation successful
-        type: string
-    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -222,78 +216,13 @@ definitions:
       name:
         type: string
     type: object
-  entities.FeedbackAnswer:
+  handlers.UpdateProfileRequest:
     properties:
-      answer:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      question_id:
-        type: string
-      student:
-        $ref: '#/definitions/entities.User'
-      student_id:
-        type: string
-    type: object
-  entities.FeedbackQuestion:
-    properties:
-      answers:
-        items:
-          $ref: '#/definitions/entities.FeedbackAnswer'
-        type: array
-      created_at:
-        type: string
-      created_by:
-        type: string
-      id:
-        type: string
-      question:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  entities.Role:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      name:
-        $ref: '#/definitions/entities.RoleName'
-      updated_at:
-        type: string
-    type: object
-  entities.RoleName:
-    enum:
-    - ADMIN
-    - TEACHER
-    - STUDENT
-    type: string
-    x-enum-varnames:
-    - ADMIN
-    - TEACHER
-    - STUDENT
-  entities.User:
-    properties:
-      created_at:
-        type: string
       email:
+        example: john@example.com
         type: string
-      id:
-        type: string
-      is_active:
-        type: boolean
       name:
-        type: string
-      roles:
-        items:
-          $ref: '#/definitions/entities.Role'
-        type: array
-      updated_at:
+        example: John Doe
         type: string
     type: object
   utils.ErrorResponse:
@@ -374,7 +303,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GenericResponse'
+            $ref: '#/definitions/utils.SuccessResponse'
         "400":
           description: Bad Request
           schema:
@@ -404,7 +333,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.LoginResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -427,7 +361,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GenericResponse'
+            $ref: '#/definitions/utils.SuccessResponse'
         "400":
           description: Bad Request
           schema:
@@ -459,7 +393,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.RegisterResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.RegisterResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -489,7 +428,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.GenericResponse'
+            $ref: '#/definitions/utils.SuccessResponse'
         "400":
           description: Bad Request
           schema:
@@ -532,32 +471,16 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Submit feedback answer
       tags:
       - Feedback
   /api/feedback/questions:
-    get:
-      description: Mendapatkan semua pertanyaan feedback
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/entities.FeedbackQuestion'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      summary: Get all feedback questions
-      tags:
-      - Feedback
     post:
       consumes:
       - application/json
-      description: Admin membuat pertanyaan feedback baru
+      description: Teacher membuat pertanyaan feedback baru (Teacher only)
       parameters:
       - description: Question payload
         in: body
@@ -571,7 +494,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/entities.FeedbackQuestion'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.FeedbackQuestionWithAnswersResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -584,7 +512,49 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create new feedback question
+      tags:
+      - Feedback
+  /api/feedback/questions/{teacher_id}:
+    get:
+      description: Menampilkan semua pertanyaan feedback berdasarkan teacher ID
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: teacher_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.FeedbackQuestionWithAnswersResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get feedback questions by teacher ID
       tags:
       - Feedback
   /api/feedback/teacher:
@@ -656,17 +626,89 @@ paths:
       summary: Check service health
       tags:
       - Health
+  /api/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserProfileResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update authenticated user's profile information
+      parameters:
+      - description: Update Profile Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - Users
   /api/users:
     get:
       consumes:
       - application/json
-      description: Retrieve a paginated list of all users
+      description: Retrieve a paginated list of all users (Admin only)
       parameters:
-      - description: Page number
+      - default: 1
+        description: Page number
         in: query
         name: page
         type: integer
-      - description: Items per page
+      - default: 10
+        description: Items per page
         in: query
         name: per_page
         type: integer
@@ -676,11 +718,22 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.PaginatedUsersResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaginatedUsersResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get all users
       tags:
       - Users
@@ -701,23 +754,34 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserResponse'
+              type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get user by ID
       tags:
       - Users
   /api/users/{id}/activate:
-    put:
+    post:
       consumes:
       - application/json
-      description: Activate a previously deactivated user account
+      description: Activate a previously deactivated user account (Admin only)
       parameters:
       - description: User ID
         in: path
@@ -730,9 +794,18 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserStatusResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserStatusResponse'
+              type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
@@ -741,10 +814,10 @@ paths:
       tags:
       - Users
   /api/users/{id}/deactivate:
-    put:
+    post:
       consumes:
       - application/json
-      description: Deactivate a user's account by ID
+      description: Deactivate a user's account by ID (Admin only)
       parameters:
       - description: User ID
         in: path
@@ -757,9 +830,18 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserStatusResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserStatusResponse'
+              type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
@@ -768,10 +850,10 @@ paths:
       tags:
       - Users
   /api/users/{id}/role:
-    put:
+    post:
       consumes:
       - application/json
-      description: Assign or update a user's role
+      description: Assign or update a user's role (Admin only)
       parameters:
       - description: User ID
         in: path
@@ -790,39 +872,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserRoleResponse'
+            allOf:
+            - $ref: '#/definitions/utils.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserRoleResponse'
+              type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Set user role
-      tags:
-      - Users
-  /api/users/profile:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve authenticated user's profile
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.UserProfileResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/utils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get user profile
       tags:
       - Users
 schemes:
